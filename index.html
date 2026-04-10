@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitality | Health Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo">Vitality.</h2>
+                <button class="close-sidebar" id="closeSidebar">&times;</button>
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item active" data-target="dashboard">
+                    <span class="icon">📊</span> Dashboard
+                </li>
+                <li class="nav-item" data-target="profile">
+                    <span class="icon">👤</span> Profile Selection
+                </li>
+                <li class="nav-item" data-target="tracker">
+                    <span class="icon">🥗</span> Food Tracker
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <button class="menu-toggle" id="menuToggle">☰</button>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                <div class="header-profile" id="headerProfileName">Hello, Guest</div>
+            </header>
+
+            <!-- ===================== DASHBOARD VIEW ===================== -->
+            <section id="dashboard" class="page-section active">
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="card summary-card">
+                        <h3>Current Goal</h3>
+                        <p class="summary-value" id="dashGoal">--</p>
+                    </div>
+                    <div class="card summary-card">
+                        <h3>Your Weight</h3>
+                        <p class="summary-value"><span id="dashWeight">--</span> kg</p>
+                    </div>
+                    <div class="card summary-card">
+                        <h3>Current BMI</h3>
+                        <p class="summary-value" id="dashBMI">--</p>
+                        <span class="badge" id="dashBMICategory">Unknown</span>
+                    </div>
+                    <div class="card summary-card highlight-card">
+                        <h3>Daily Calorie Target</h3>
+                        <p class="summary-value"><span id="dashTargetCalories">--</span> kcal</p>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="card progress-card mt-2">
+                    <div class="progress-header">
+                        <h3>Calories Consumed Today</h3>
+                        <span id="calorieCountText">0 / -- kcal</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="calorieProgressBar"></div>
+                    </div>
+                    <p id="calorieNotification" class="notification hidden"></p>
+                </div>
+
+                <!-- Meal Recommendations Section -->
+                <div class="meals-section mt-2">
+                    <div class="section-header">
+                        <h2>Meal Recommendations</h2>
+                        <div class="filter-controls">
+                            <select id="filterTime" class="filter-select">
+                                <option value="morning">Breakfast</option>
+                                <option value="afternoon">Lunch</option>
+                                <option value="evening">Dinner</option>
+                            </select>
+                            <select id="filterCategory" class="filter-select">
+                                <option value="all">All Categories</option>
+                                <option value="healthy">Healthy</option>
+                                <option value="protein">High Protein</option>
+                                <option value="balanced">Balanced</option>
+                            </select>
+                            <button id="refreshMeals" class="btn btn-primary">Refresh</button>
+                        </div>
+                    </div>
+                    <p id="upgradeMessage" class="upgrade-msg"></p>
+                    <div class="meals-grid" id="mealsGrid">
+                        <!-- Meal Cards injected via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===================== PROFILE VIEW ===================== -->
+            <section id="profile" class="page-section">
+                <div class="card form-card">
+                    <h2>Setup Your Profile</h2>
+                    <p class="text-muted">Enter your details to get personalized macro estimates and recommendations.</p>
+                    
+                    <form id="profileForm" class="mt-2">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="userName">Full Name</label>
+                                <input type="text" id="userName" required placeholder="e.g. Jane Doe">
+                            </div>
+                            <div class="input-group">
+                                <label for="age">Age</label>
+                                <input type="number" id="age" min="10" max="100" required placeholder="e.g. 20">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="weight">Weight (kg)</label>
+                                <input type="number" id="weight" min="30" max="250" step="0.1" required placeholder="e.g. 65">
+                            </div>
+                            <div class="input-group">
+                                <label for="height">Height (cm)</label>
+                                <input type="number" id="height" min="100" max="250" required placeholder="e.g. 170">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="goal">Fitness Goal</label>
+                                <select id="goal" required>
+                                    <option value="loss">Weight Loss</option>
+                                    <option value="maintain">Maintain Weight</option>
+                                    <option value="gain">Weight Gain</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="budget">Meal Budget</label>
+                                <select id="budget" required>
+                                    <option value="low">Low Budget (Student Friendly)</option>
+                                    <option value="medium">Medium Budget</option>
+                                    <option value="high">High Budget</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-submit mt-2">Save Profile</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ===================== TRACKER VIEW ===================== -->
+            <section id="tracker" class="page-section">
+                <div class="tracker-layout">
+                    <!-- Add Food Form -->
+                    <div class="card form-card">
+                        <h2>Log a Meal</h2>
+                        <form id="trackerForm" class="mt-2">
+                            <div class="input-group">
+                                <label for="foodName">Food/Meal Name</label>
+                                <input type="text" id="foodName" required placeholder="e.g. Banana">
+                            </div>
+                            <div class="input-group">
+                                <label for="foodCalories">Calories (kcal)</label>
+                                <input type="number" id="foodCalories" required min="1" placeholder="e.g. 105">
+                            </div>
+                            <button type="submit" class="btn btn-submit mt-1">+ Add to Log</button>
+                        </form>
+                        
+                        <div class="quick-add mt-2">
+                            <h4>Not sure? Estimate standard items:</h4>
+                            <div class="tag-group mt-1">
+                                <span class="tag quick-log" data-name="Apple" data-calories="95">Apple (95)</span>
+                                <span class="tag quick-log" data-name="Burger" data-calories="500">Burger (500)</span>
+                                <span class="tag quick-log" data-name="Protein Shake" data-calories="180">Protein Shake (180)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Log -->
+                    <div class="card log-card">
+                        <div class="log-header">
+                            <h2>Today's Consumption</h2>
+                            <button id="clearLogBtn" class="btn btn-small btn-danger">Clear</button>
+                        </div>
+                        <ul class="food-log-list mt-2" id="foodLogList">
+                            <!-- List items injected via JS -->
+                        </ul>
+                        <div class="log-total mt-2">
+                            <h3>Total: <span id="trackerTotal">0</span> kcal</h3>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
