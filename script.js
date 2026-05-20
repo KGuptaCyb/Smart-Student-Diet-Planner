@@ -4,6 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE_URL = "https://smart-student-diet-planner-1.onrender.com";
 
     /* ==========================================
        1. NAVIGATION LOGIC
@@ -55,13 +56,24 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================== */
     const profileForm = document.getElementById('profileForm');
     
-    function getUserData() {
-        return JSON.parse(localStorage.getItem('vitalityUserData')) || null;
+    // function getUserData() {
+    //     return JSON.parse(localStorage.getItem('vitalityUserData')) || null;
+    // }
+    async function getUserData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/profile`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        return null;
     }
+}
 
     // Initialize UI on start
-    function initApp() {
-        const userData = getUserData();
+    async function initApp() {
+        //const userData = getUserData();
+        const userData = await getUserData();
         if (userData) {
             // Fill Form Back in
             document.getElementById('userName').value = userData.name;
@@ -97,7 +109,19 @@ document.addEventListener('DOMContentLoaded', () => {
             budget: document.getElementById('budget').value
         };
 
-        localStorage.setItem('vitalityUserData', JSON.stringify(userData));
+        //localStorage.setItem('vitalityUserData', JSON.stringify(userData));
+        fetch(`${API_BASE_URL}/api/profile`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(userData)
+})
+.then(res => res.json())
+.then(data => {
+    console.log("Profile saved:", data);
+})
+.catch(err => console.error(err));
         document.getElementById('headerProfileName').innerText = `Hello, ${userData.name.split(' ')[0]}`;
         
         // Go back to Dashboard after saving profile
