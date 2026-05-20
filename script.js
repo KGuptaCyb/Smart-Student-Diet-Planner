@@ -5,13 +5,13 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ==============================
+    // ==========================================
     // BACKEND URL
-    // ==============================
+    // ==========================================
     const API_BASE_URL = "https://smart-student-diet-planner-1.onrender.com";
 
     /* ==========================================
-       1. NAVIGATION LOGIC
+       NAVIGATION
        ========================================== */
 
     const navItems = document.querySelectorAll('.nav-item');
@@ -40,7 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 sidebar.classList.remove('open');
             }
 
-            if (target === 'dashboard') updateDashboard();
+            if (target === 'dashboard') {
+                updateDashboard();
+            }
         });
     });
 
@@ -48,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar.addEventListener('click', () => sidebar.classList.remove('open'));
 
     /* ==========================================
-       2. PROFILE APIs
+       PROFILE APIs
        ========================================== */
 
     async function getUserData() {
@@ -56,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`${API_BASE_URL}/api/profile`);
             return await res.json();
         } catch (err) {
-            console.error(err);
+            console.error("Profile Fetch Error:", err);
             return null;
         }
     }
@@ -71,12 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(userData)
             });
         } catch (err) {
-            console.error(err);
+            console.error("Profile Save Error:", err);
         }
     }
 
     /* ==========================================
-       3. FOOD LOG APIs
+       FOOD LOG APIs
        ========================================== */
 
     async function getFoodLog() {
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`${API_BASE_URL}/api/food-log`);
             return await res.json();
         } catch (err) {
-            console.error(err);
+            console.error("Food Log Fetch Error:", err);
             return [];
         }
     }
@@ -99,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(item)
             });
         } catch (err) {
-            console.error(err);
+            console.error("Add Food Error:", err);
         }
     }
 
@@ -109,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: "DELETE"
             });
         } catch (err) {
-            console.error(err);
+            console.error("Delete Food Error:", err);
         }
     }
 
@@ -119,12 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: "DELETE"
             });
         } catch (err) {
-            console.error(err);
+            console.error("Clear Food Error:", err);
         }
     }
 
     /* ==========================================
-       4. INITIALIZE APP
+       INITIALIZE APP
        ========================================== */
 
     async function initApp() {
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================
-       5. PROFILE FORM
+       PROFILE FORM
        ========================================== */
 
     const profileForm = document.getElementById('profileForm');
@@ -181,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ==========================================
-       6. BMI + CALORIE FUNCTIONS
+       BMI + CALORIE FUNCTIONS
        ========================================== */
 
     function calculateBMI(weight, height) {
@@ -219,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================
-       7. DASHBOARD
+       DASHBOARD
        ========================================== */
 
     async function updateDashboard() {
@@ -250,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================
-       8. FOOD TRACKER
+       FOOD TRACKER
        ========================================== */
 
     const trackerForm = document.getElementById('trackerForm');
@@ -261,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tag.addEventListener('click', async (e) => {
 
             const name = e.target.getAttribute('data-name');
+
             const calories = parseInt(
                 e.target.getAttribute('data-calories')
             );
@@ -287,16 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('clearLogBtn')
-        .addEventListener('click', async () => {
+    document.getElementById('clearLogBtn').addEventListener('click', async () => {
 
-            if (confirm("Clear today's food log?")) {
+        if (confirm("Are you sure you want to clear today's food log?")) {
 
-                await clearFoodAPI();
+            await clearFoodAPI();
 
-                renderFoodLog();
-            }
-        });
+            renderFoodLog();
+        }
+    });
 
     async function addFoodToLog(name, calories) {
 
@@ -337,9 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div>
-                    <span class="log-item-cal">
-                        ${item.calories} kcal
-                    </span>
+                    <span class="log-item-cal">${item.calories} kcal</span>
 
                     <button
                         class="log-delete"
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const userData = await getUserData();
 
-        if (userData && userData.name) {
+        if (userData) {
 
             const target = estimateDailyCalories(userData);
 
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================
-       9. PROGRESS BAR
+       PROGRESS BAR
        ========================================== */
 
     async function updateProgressBar(target) {
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================
-       10. START APP
+       START APP
        ========================================== */
 
     initApp();
