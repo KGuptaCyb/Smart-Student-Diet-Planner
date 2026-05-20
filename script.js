@@ -81,15 +81,25 @@ document.addEventListener('DOMContentLoaded', () => {
        FOOD LOG APIs
        ========================================== */
 
-    async function getFoodLog() {
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/food-log`);
-            return await res.json();
-        } catch (err) {
-            console.error("Food Log Fetch Error:", err);
-            return [];
-        }
+   async function getFoodLog() {
+
+    try {
+
+        const res = await fetch(`${API_BASE_URL}/api/food-log`);
+
+        const data = await res.json();
+
+        return Array.isArray(data)
+            ? data
+            : data.foodLog || [];
+
+    } catch (err) {
+
+        console.error(err);
+
+        return [];
     }
+}
 
     async function addFoodAPI(item) {
         try {
