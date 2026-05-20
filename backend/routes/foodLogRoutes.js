@@ -5,7 +5,7 @@ const {
   addFoodLog, 
   deleteFoodLogItem, 
   clearAllFoodLogs 
-} = require('../controllers/foodLogController');
+} = require('../controller/foodLogController');
 
 // GET /api/food-log - Retrieve all food items and total calorie summary
 router.get('/', getFoodLogs);
