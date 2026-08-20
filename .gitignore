@@ -1,0 +1,14 @@
+# Dependencies and build output
+node_modules/
+backend/node_modules/
+dist/
+
+# Environment files and local databases
+.env
+.env.*
+!.env.example
+*.sqlite
+
+# OS and editor files
+.DS_Store
+.vscode/

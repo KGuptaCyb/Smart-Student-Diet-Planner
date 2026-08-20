@@ -1,85 +1,41 @@
-/**
- * Profile Controller
- * Handles user profile retrieval and updates in-memory.
- */
+const db = require('../db');
+const { validateProfile } = require('../utils/validation');
 
-// Temporary in-memory data store for the user profile
-// Initialized with null or a default object.
-let userProfile = null;
-
-/**
- * @desc    Get user profile details
- * @route   GET /api/profile
- * @access  Public
- */
-const getProfile = (req, res) => {
+const getProfile = async (req, res, next) => {
   try {
-    // If no profile exists, return a 404 or a clear message
-    if (!userProfile) {
-      return res.status(200).json({ 
-        success: true, 
-        message: "No profile found. Please set up your profile.",
-        data: null 
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Profile retrieved successfully",
-      data: userProfile
-    });
+    const { rows } = await db.query(
+      `SELECT user_id, name, age, weight_kg AS weight, height_cm AS height,
+              sex, activity_level AS "activityLevel", goal, budget
+       FROM profiles WHERE user_id = $1`,
+      [req.userId]
+    );
+    res.json({ success: true, data: rows[0] || null });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error retrieving profile",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-/**
- * @desc    Save/Update user profile details
- * @route   POST /api/profile
- * @access  Public
- */
-const saveProfile = (req, res) => {
+const saveProfile = async (req, res, next) => {
+  const result = validateProfile(req.body);
+  if (result.error) return res.status(400).json({ success: false, message: result.error });
+
+  const { name, age, weight, height, sex, activityLevel, goal, budget } = result.value;
   try {
-    const { name, age, weight, height, goal, budget } = req.body;
-
-    // Simple validation
-    if (!name || !age || !weight || !height || !goal || !budget) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields: name, age, weight, height, goal, budget"
-      });
-    }
-
-    // Save profile to our in-memory variable
-    userProfile = {
-      name,
-      age: parseInt(age),
-      weight: parseFloat(weight),
-      height: parseFloat(height),
-      goal,
-      budget,
-      updatedAt: new Date()
-    };
-
-    res.status(200).json({
-      success: true,
-      message: "Profile saved successfully!",
-      data: userProfile
-    });
+    const { rows } = await db.query(
+      `INSERT INTO profiles (user_id, name, age, weight_kg, height_cm, sex, activity_level, goal, budget)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (user_id) DO UPDATE SET
+         name = EXCLUDED.name, age = EXCLUDED.age, weight_kg = EXCLUDED.weight_kg,
+         height_cm = EXCLUDED.height_cm, sex = EXCLUDED.sex, activity_level = EXCLUDED.activity_level,
+         goal = EXCLUDED.goal, budget = EXCLUDED.budget, updated_at = NOW()
+       RETURNING user_id, name, age, weight_kg AS weight, height_cm AS height,
+                 sex, activity_level AS "activityLevel", goal, budget`,
+      [req.userId, name, age, weight, height, sex, activityLevel, goal, budget]
+    );
+    res.status(200).json({ success: true, data: rows[0], message: 'Profile saved successfully.' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error saving profile",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-module.exports = {
-  getProfile,
-  saveProfile
-};
+module.exports = { getProfile, saveProfile };

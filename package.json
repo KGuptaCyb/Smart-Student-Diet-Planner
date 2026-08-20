@@ -1,0 +1,17 @@
+{
+  "name": "smart-student-diet-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A student-friendly nutrition tracker with an Express and PostgreSQL API.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.3"
+  }
+}

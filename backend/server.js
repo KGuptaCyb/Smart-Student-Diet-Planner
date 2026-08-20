@@ -1,82 +1,62 @@
-/**
- * Vitality Health Dashboard Backend
- * Core Server File
- */
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-
-// Initialize Express App
-const app = express();
-
-// Define Port
-const PORT = process.env.PORT || 5001;
-
-/* ==========================================
-   MIDDLEWARE CONFIGURATION
-   ========================================== */
-
-// 1. Enable CORS (Cross-Origin Resource Sharing)
-// This is critical to allow your frontend (running on another port/file protocol) 
-// to make fetch requests to this backend.
-app.use(cors());
-
-// 2. Body Parser Middleware
-// Allows the server to read JSON payload data sent in the request bodies (e.g., req.body)
-app.use(express.json());
-
-// 3. Form URL-encoded data middleware (optional but useful)
-app.use(express.urlencoded({ extended: false }));
-
-/* ==========================================
-   API ROUTE MOUNTING
-   ========================================== */
-
-// Import Route modules
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const db = require('./db');
 const profileRoutes = require('./routes/profileRoutes');
 const foodLogRoutes = require('./routes/foodLogRoutes');
+const { isUuid } = require('./utils/validation');
 
-// Mount routes onto base path endpoints
+const app = express();
+const PORT = Number(process.env.PORT) || 5001;
+const allowedOrigins = new Set((process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map((origin) => origin.trim()).filter(Boolean));
+
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(new Error('This origin is not allowed by CORS.'));
+  },
+  methods: ['GET', 'POST', 'DELETE']
+}));
+app.use(express.json({ limit: '10kb' }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 150, standardHeaders: 'draft-7', legacyHeaders: false }));
+
+app.use('/api', (req, res, next) => {
+  const userId = req.get('x-user-id');
+  if (!isUuid(userId)) return res.status(400).json({ success: false, message: 'A valid x-user-id header is required.' });
+  req.userId = userId;
+  next();
+});
+
+app.get('/health', async (req, res, next) => {
+  try {
+    await db.query('SELECT 1');
+    res.status(200).json({ success: true, status: 'ok' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/', (req, res) => res.json({
+  name: 'Smart Student Diet Planner API',
+  version: '1.0.0',
+  health: '/health'
+}));
+
 app.use('/api/profile', profileRoutes);
 app.use('/api/food-log', foodLogRoutes);
-
-// Welcome Root Route (Good for testing if server is running)
-app.get('/', (req, res) => {
-  res.status(200).json({
-    message: "Welcome to the Vitality Health Dashboard API!",
-    endpoints: {
-      profile: {
-        get: "GET /api/profile",
-        save: "POST /api/profile"
-      },
-      foodLog: {
-        get: "GET /api/food-log",
-        add: "POST /api/food-log",
-        deleteItem: "DELETE /api/food-log/:id",
-        clearAll: "DELETE /api/food-log"
-      }
-    }
-  });
+app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found.' }));
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(500).json({ success: false, message: 'An unexpected server error occurred.' });
 });
 
-// Global Error Handler Middleware
-app.use((err, req, res, next) => {
-  console.error("Unhandled Server Error:", err.stack);
-  res.status(500).json({
-    success: false,
-    message: "Something went wrong on the server!",
-    error: err.message
-  });
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => console.log(`API listening on port ${PORT}`));
+}
 
-/* ==========================================
-   SERVER INITIALIZATION
-   ========================================== */
-app.listen(PORT, () => {
-  console.log(`===================================================`);
-  console.log(`  Vitality Health Backend is running on port ${PORT}`);
-  console.log(`  API Root: http://localhost:${PORT}/`);
-  console.log(`===================================================`);
-});
-
+module.exports = app;

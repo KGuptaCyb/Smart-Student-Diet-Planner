@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: smart-student-diet-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-student-diet-db
+          property: connectionString
+
+databases:
+  - name: smart-student-diet-db
+    plan: basic-256mb

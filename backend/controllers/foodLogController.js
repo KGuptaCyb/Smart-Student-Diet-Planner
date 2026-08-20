@@ -1,158 +1,78 @@
-/**
- * Food Log & Calorie Controller
- * Handles food tracking operations and calorie calculations in-memory.
- */
+const { randomUUID } = require('crypto');
+const db = require('../db');
+const { validateFoodLog } = require('../utils/validation');
 
-// Temporary in-memory array to store food log items
-let foodLogs = [];
+const todayClause = "logged_at >= date_trunc('day', NOW()) AND logged_at < date_trunc('day', NOW()) + INTERVAL '1 day'";
 
-/**
- * @desc    Get all food logs and total calories
- * @route   GET /api/food-log
- * @access  Public
- */
-const getFoodLogs = (req, res) => {
+const getFoodLogs = async (req, res, next) => {
   try {
-    // Calculate total calories consumed from the food logs array
-    const totalCalories = foodLogs.reduce((sum, item) => sum + item.calories, 0);
-
-    res.status(200).json({
-      success: true,
-      count: foodLogs.length,
-      totalCalories: totalCalories,
-      data: foodLogs
-    });
+    const { rows } = await db.query(
+      `SELECT id, name, calories, logged_at AS "loggedAt" FROM food_logs
+       WHERE user_id = $1 AND ${todayClause} ORDER BY logged_at DESC`,
+      [req.userId]
+    );
+    const totalCalories = rows.reduce((sum, item) => sum + item.calories, 0);
+    res.json({ success: true, count: rows.length, totalCalories, data: rows });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error fetching food logs",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-/**
- * @desc    Add a new food item to the log
- * @route   POST /api/food-log
- * @access  Public
- */
-const addFoodLog = (req, res) => {
+const getWeeklyFoodHistory = async (req, res, next) => {
   try {
-    const { name, calories } = req.body;
-
-    // Simple validation
-    if (!name || calories === undefined || calories === null) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide food name and calories."
-      });
-    }
-
-    const parsedCalories = parseInt(calories);
-    if (isNaN(parsedCalories) || parsedCalories < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Calories must be a valid non-negative number."
-      });
-    }
-
-    // Create a new log item with a unique ID and timestamp
-    const newLogItem = {
-      id: Date.now(), // Unique ID using timestamp
-      name: name.trim(),
-      calories: parsedCalories,
-      loggedAt: new Date()
-    };
-
-    // Add to in-memory array
-    foodLogs.push(newLogItem);
-
-    // Calculate new total calories
-    const totalCalories = foodLogs.reduce((sum, item) => sum + item.calories, 0);
-
-    res.status(201).json({
-      success: true,
-      message: "Food item logged successfully!",
-      data: newLogItem,
-      totalCalories: totalCalories
-    });
+    const { rows } = await db.query(
+      `SELECT TO_CHAR(days.day, 'YYYY-MM-DD') AS date,
+              COALESCE(SUM(food_logs.calories), 0)::INTEGER AS calories
+       FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS days(day)
+       LEFT JOIN food_logs ON food_logs.user_id = $1
+         AND food_logs.logged_at >= days.day
+         AND food_logs.logged_at < days.day + INTERVAL '1 day'
+       GROUP BY days.day
+       ORDER BY days.day`,
+      [req.userId]
+    );
+    res.json({ success: true, data: rows });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error adding food log",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-/**
- * @desc    Delete a single food item from the log
- * @route   DELETE /api/food-log/:id
- * @access  Public
- */
-const deleteFoodLogItem = (req, res) => {
+const addFoodLog = async (req, res, next) => {
+  const result = validateFoodLog(req.body);
+  if (result.error) return res.status(400).json({ success: false, message: result.error });
+
   try {
-    const { id } = req.params;
-    const parsedId = parseInt(id);
-
-    // Find if the item exists
-    const itemIndex = foodLogs.findIndex(item => item.id === parsedId);
-
-    if (itemIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: "Food item not found."
-      });
-    }
-
-    // Remove the item from array
-    const deletedItem = foodLogs.splice(itemIndex, 1)[0];
-
-    // Calculate new total calories
-    const totalCalories = foodLogs.reduce((sum, item) => sum + item.calories, 0);
-
-    res.status(200).json({
-      success: true,
-      message: `Removed '${deletedItem.name}' from logs.`,
-      deletedItem: deletedItem,
-      totalCalories: totalCalories
-    });
+    const { rows } = await db.query(
+      `INSERT INTO food_logs (id, user_id, name, calories) VALUES ($1, $2, $3, $4)
+       RETURNING id, name, calories, logged_at AS "loggedAt"`,
+      [randomUUID(), req.userId, result.value.name, result.value.calories]
+    );
+    res.status(201).json({ success: true, data: rows[0], message: 'Food item logged successfully.' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error deleting food log item",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-/**
- * @desc    Clear all food log items for the day
- * @route   DELETE /api/food-log
- * @access  Public
- */
-const clearAllFoodLogs = (req, res) => {
+const deleteFoodLogItem = async (req, res, next) => {
   try {
-    foodLogs = []; // Empty the array
-
-    res.status(200).json({
-      success: true,
-      message: "All food logs have been cleared successfully.",
-      totalCalories: 0,
-      data: []
-    });
+    const { rowCount } = await db.query(
+      `DELETE FROM food_logs WHERE id = $1 AND user_id = $2 AND ${todayClause}`,
+      [req.params.id, req.userId]
+    );
+    if (!rowCount) return res.status(404).json({ success: false, message: 'Food item not found.' });
+    res.json({ success: true, message: 'Food item deleted.' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error clearing food logs",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-module.exports = {
-  getFoodLogs,
-  addFoodLog,
-  deleteFoodLogItem,
-  clearAllFoodLogs
+const clearAllFoodLogs = async (req, res, next) => {
+  try {
+    await db.query(`DELETE FROM food_logs WHERE user_id = $1 AND ${todayClause}`, [req.userId]);
+    res.json({ success: true, message: "Today's food log cleared." });
+  } catch (error) {
+    next(error);
+  }
 };
+
+module.exports = { getFoodLogs, getWeeklyFoodHistory, addFoodLog, deleteFoodLogItem, clearAllFoodLogs };

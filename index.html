@@ -22,7 +22,7 @@
                     <span class="icon">📊</span> Dashboard
                 </li>
                 <li class="nav-item" data-target="profile">
-                    <span class="icon">👤</span> Profile Selection
+                            <span class="icon">👤</span> Profile
                 </li>
                 <li class="nav-item" data-target="tracker">
                     <span class="icon">🥗</span> Food Tracker
@@ -74,6 +74,20 @@
                     <p id="calorieNotification" class="notification hidden"></p>
                 </div>
 
+                <div class="card history-card mt-2">
+                    <div class="progress-header">
+                        <div>
+                            <h3>Seven-Day Calorie History</h3>
+                            <p class="text-muted">Daily intake compared with your current calorie target.</p>
+                        </div>
+                        <span class="chart-legend"><i></i> Intake <b></b> Target</span>
+                    </div>
+                    <div class="chart-scroll">
+                        <svg id="weeklyChart" class="weekly-chart" viewBox="0 0 700 250" role="img" aria-label="Seven-day calorie history chart"></svg>
+                    </div>
+                    <p id="historyEmptyState" class="text-muted chart-empty hidden">Add meals to begin building your history.</p>
+                </div>
+
                 <!-- Meal Recommendations Section -->
                 <div class="meals-section mt-2">
                     <div class="section-header">
@@ -90,7 +104,7 @@
                                 <option value="protein">High Protein</option>
                                 <option value="balanced">Balanced</option>
                             </select>
-                            <button id="refreshMeals" class="btn btn-primary">Refresh</button>
+                            <button id="refreshMeals" type="button" class="btn btn-primary">Refresh</button>
                         </div>
                     </div>
                     <p id="upgradeMessage" class="upgrade-msg"></p>
@@ -104,7 +118,8 @@
             <section id="profile" class="page-section">
                 <div class="card form-card">
                     <h2>Setup Your Profile</h2>
-                    <p class="text-muted">Enter your details to get personalized macro estimates and recommendations.</p>
+                    <p class="text-muted">Enter your details to get a daily calorie estimate.</p>
+                    <p class="text-muted">This tool provides an estimate only and is not medical advice.</p>
                     
                     <form id="profileForm" class="mt-2">
                         <div class="form-row">
@@ -115,6 +130,26 @@
                             <div class="input-group">
                                 <label for="age">Age</label>
                                 <input type="number" id="age" min="10" max="100" required placeholder="e.g. 20">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="sex">Sex used for estimate</label>
+                                <select id="sex" required>
+                                    <option value="female">Female</option>
+                                    <option value="male">Male</option>
+                                    <option value="other">Other / prefer not to say</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="activityLevel">Activity level</label>
+                                <select id="activityLevel" required>
+                                    <option value="sedentary">Sedentary</option>
+                                    <option value="light">Lightly active</option>
+                                    <option value="moderate">Moderately active</option>
+                                    <option value="active">Very active</option>
+                                </select>
                             </div>
                         </div>
 
@@ -200,6 +235,7 @@
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <p id="appStatus" class="notification app-status hidden" role="status" aria-live="polite"></p>
+    <script type="module" src="/script.js"></script>
 </body>
 </html>
